@@ -20,34 +20,42 @@ A wrapper for [Java Tarantool Connector](https://github.com/tarantool/tarantool-
 
   (let [client (client/new-client connection-config)
         space (space/new-space client test-space-config)]
-    (space/insert {:id 1
+    (space/insert space
+                  {:id 1
                    :first-name "Steve"
                    :second-name "Buscemi"})
     ;; ({:id 1 :first-name "Steve" :second-name "Buscemi"})
-    (space/insert {:id 2
+    (space/insert space
+                  {:id 2
                    :first-name "Steve"
                    :second-name "Jobs"})
     ;; ({:id 2 :first-name "Steve" :second-name "Jobs"})
-    (space/insert {:id 3
+    (space/insert space 
+                  {:id 3
                    :first-name "Tim"
                    :second-name "Roth"})
     ;; ({:id 3 :first-name "Tim" :second-name "Roth"})
-    (space/select-first {:id 1})
+    (space/select-first space {:id 1})
     {:id 1 :first-name "Steve" :second-name "Buscemi"}
-    (space/select {:first-name "Steve"})
+    (space/select space {:first-name "Steve"})
     ;; ({:id 1 :first-name "Steve" :second-name "Buscemi"}
     ;;  {:id 2 :first-name "Steve" :second-name "Jobs"})
-    (space/select {:first-name "Steve"} {:iterator :eq})
+    (space/select space {:first-name "Steve"} {:iterator :eq})
     ;; ({:id 1 :first-name "Steve" :second-name "Buscemi"}
     ;;  {:id 2 :first-name "Steve" :second-name "Jobs"})
-    (space/select {:first-name "Steve"} {:terator :eq :offset 1 :limit 100})
+    (space/select space 
+                  {:first-name "Steve"} 
+                  {:terator :eq :offset 1 :limit 100})
     ;; ({:id 2 :first-name "Steve" :second-name "Jobs"})
-    (space/update {:id 2} {:second-name ["=" "Ballmer"]})
+    (space/update space {:id 2} {:second-name ["=" "Ballmer"]})
     ;; ({:id 2 :first-name "Steve" :second-name "Ballmer"})
-    (space/update {:id 2} {:second-name [":" 3 "dwin"]
-                           :first-name [":" 3 "phen"]})
+    (space/update space
+                  {:id 2} 
+                  {:second-name [":" 3 "dwin"]
+                   :first-name [":" 3 "phen"]})
     ;; ({:id 2 :first-name "Stephen" :second-name "Baldwin"})
-    (space/delete {:id 3})
+    (space/delete space
+                  {:id 3})
     ;; ({:id 3 :first-name "Tim" :second-name "Roth"})
     (space/eval space
                 "function ping()
