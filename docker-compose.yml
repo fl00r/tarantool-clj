@@ -1,0 +1,17 @@
+version: '2'
+services:
+  tarantool:
+    image: tarantool/tarantool:1.6
+    volumes:
+      - ./scripts/:/opt/scripts
+    command: tarantool /opt/scripts/app.lua
+    environment:
+      - TARANTOOL_USER_NAME=tester
+      - TARANTOOL_USER_PASSWORD=tester
+    ports:
+      - 3301:3301
+  tarantool.client:
+    image: tarantool/tarantool:1.6
+    command: tarantoolctl connect tester:tester@tarantool:3301
+    depends_on:
+      - tarantool
