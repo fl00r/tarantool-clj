@@ -57,8 +57,8 @@ A wrapper for [Java Tarantool Connector](https://github.com/tarantool/tarantool-
     ;; ({:id 2 :first-name "Steve" :second-name "Ballmer"})
     (space/update space
                   {:id 2} 
-                  {:second-name [":" 3 "dwin"]
-                   :first-name [":" 3 "phen"]})
+                  {:second-name [":" 3 4 "dwin"]
+                   :first-name [":" 3 4 "phen"]})
     ;; ({:id 2 :first-name "Stephen" :second-name "Baldwin"})
     (space/delete space
                   {:id 3})
