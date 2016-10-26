@@ -35,19 +35,25 @@ A wrapper for [Java Tarantool Connector](https://github.com/tarantool/tarantool-
                    :first-name "Tim"
                    :second-name "Roth"})
     ;; ({:id 3 :first-name "Tim" :second-name "Roth"})
-    (space/select-first space {:id 1})
-    {:id 1 :first-name "Steve" :second-name "Buscemi"}
-    (space/select space {:first-name "Steve"})
+    (space/select-first space 
+                        {:id 1})
+    ;; {:id 1 :first-name "Steve" :second-name "Buscemi"}
+    (space/select space 
+                  {:first-name "Steve"})
     ;; ({:id 1 :first-name "Steve" :second-name "Buscemi"}
     ;;  {:id 2 :first-name "Steve" :second-name "Jobs"})
-    (space/select space {:first-name "Steve"} {:iterator :eq})
+    (space/select space 
+                  {:first-name "Steve"} 
+                  {:iterator :eq})
     ;; ({:id 1 :first-name "Steve" :second-name "Buscemi"}
     ;;  {:id 2 :first-name "Steve" :second-name "Jobs"})
     (space/select space 
                   {:first-name "Steve"} 
                   {:terator :eq :offset 1 :limit 100})
     ;; ({:id 2 :first-name "Steve" :second-name "Jobs"})
-    (space/update space {:id 2} {:second-name ["=" "Ballmer"]})
+    (space/update space 
+                  {:id 2} 
+                  {:second-name ["=" "Ballmer"]})
     ;; ({:id 2 :first-name "Steve" :second-name "Ballmer"})
     (space/update space
                   {:id 2} 
