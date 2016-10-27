@@ -27,5 +27,4 @@
     (try
       (f)
       (finally (do
-                 (client/call (get *system* client/client) "drop_testing_space" [])
-                 (client/call (get *system* client/client) "create_testing_space" []))))))
+                 (client/call (get *system* client/client) "drop_testing_space" []))))))

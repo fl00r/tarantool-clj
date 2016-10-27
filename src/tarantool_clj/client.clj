@@ -40,7 +40,7 @@
   (insert [{:keys [conn]} space-id data-tuple]
           (.insert conn space-id (to-array data-tuple)))
   (replace [{:keys [conn]} space-id data-tuple]
-           (.replace conn space-id data-tuple))
+           (.replace conn space-id (to-array data-tuple)))
   ;; in Java connector you can't pass index-id
   ;; so you can use only primary index
   (update [{:keys [conn]} space-id index-id key-tuple ops-tuples]

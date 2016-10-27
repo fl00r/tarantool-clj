@@ -56,15 +56,16 @@
          (into {}))))
 
 (defn get-index-definitions
-  [{:keys [client space-config]} space-id]
+  [{:keys [client space-config] :as space} space-id]
   (let [indexes-tuple-space (tuple-space/indexes-tuple-space client)]
     (-> indexes-tuple-space
         (tuple-space/select 0 [space-id])
         (parse-indexes space-config))))
 
 (defn key-doc->index-id
-  [{:keys [index-definitions]} key-doc]
-  (let [keys (-> key-doc keys set)
+  [space key-doc]
+  (let [index-definitions (-> space :index-definitions)
+        keys (-> key-doc keys set)
         keys-n (count keys)
         index-id (some (fn [[index-id field-parts]]
                          (when (= keys (->> field-parts (take keys-n) (set)))
@@ -77,8 +78,9 @@
         (str "Can't find proper index for keys: " keys " in indexes " index-definitions))))))
 
 (defn key-doc->key-tuple
-  [{:keys [index-definitions]} key-doc index-id]
-  (let [keys (-> key-doc keys set)
+  [space key-doc index-id]
+  (let [index-definitions (-> space :index-definitions)
+        keys (-> key-doc keys set)
         keys-n (count keys)
         index-keys (get index-definitions index-id)
         ok? (= keys (->> index-keys (take keys-n) (set)))]
@@ -90,20 +92,33 @@
        (Exception.
         (str "Keys " keys " doesn't match index keys " index-keys))))))
 
-(defn doc->tuple
-  [{:keys [space-config]} doc]
-  (let [fields (:fields space-config)]
-    (->> fields
-         (mapv doc))))
+(defn data-doc->data-tuple
+  [space doc]
+  (let [fields (-> space :space-config :fields)
+        tail (-> space :space-config :tail)
+        tail-data (when tail (get doc tail))
+        tuple (mapv doc fields)]
+    (if tail-data
+      (concat tuple tail-data)
+      tuple)))
 
 (defn data-tuples->data-docs
-  [this tuple-data]
-  (let [fields (-> this :space-config :fields)]
-    (map #(->> % (map vector fields) (into {})) tuple-data)))
+  [space tuple-data]
+  (let [fields (-> space :space-config :fields)
+        fields-n (count fields)
+        tail (-> space :space-config :tail)]
+    (map
+     #(let [tuple-n (count %)
+            tail-n (- tuple-n fields-n)
+            doc (->> % (map vector fields) (into {}))]
+        (if (and tail (> tail-n 0))
+          (assoc doc tail (take-last tail-n %))
+          doc))
+     tuple-data)))
 
 (defn ops-doc->ops-tuple
-  [this ops-doc]
-  (let [fields (-> this :space-config :fields)]
+  [space ops-doc]
+  (let [fields (-> space :space-config :fields)]
     (map
      (fn [[field [head & tail]]]
        (let [field-id (.indexOf fields field)]
@@ -138,13 +153,15 @@
              this
              (tuple-space/select tuple-space index-id key-tuple opts))))
   (insert [{:keys [tuple-space] :as this} data-doc]
-          (let [data-tuple (doc->tuple this data-doc)]
+          (let [data-tuple (data-doc->data-tuple this data-doc)]
             (data-tuples->data-docs
              this
              (tuple-space/insert tuple-space data-tuple))))
   (replace [{:keys [tuple-space] :as this} data-doc]
-           (let [data-tuple (doc->tuple this data-doc)]
-             (tuple-space/replace tuple-space data-tuple)))
+           (let [data-tuple (data-doc->data-tuple this data-doc)]
+             (data-tuples->data-docs
+              this
+              (tuple-space/replace tuple-space data-tuple))))
   (update [{:keys [tuple-space] :as this} key-doc ops-doc]
           ;; warn: index-id is not supported in underlying Java client
           (let [index-id (key-doc->index-id this key-doc)
@@ -160,6 +177,7 @@
              this
              (tuple-space/delete tuple-space key-tuple))))
   (upsert [{:keys [tuple-space]} data-tuple ops-tuples]
+          ;; upsert is broken
           (tuple-space/upsert tuple-space data-tuple ops-tuples))
   (call [{:keys [tuple-space]} function-name]
         (tuple-space/call tuple-space function-name))
