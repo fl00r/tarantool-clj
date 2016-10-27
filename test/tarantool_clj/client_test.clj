@@ -3,29 +3,23 @@
              [client :as client]
              [tuple-space :as tuple-space]
              [space :as space]
-             [test-utils :refer [*system* with-system with-truncated-tarantool]]]
+             [test-utils :refer [with-truncated-tarantool]]]
             [clojure.test :refer :all]
             [com.stuartsierra.component :as component]))
 
-(defn client [] (get *system* client/client))
+(def config (clojure.edn/read-string (slurp "config/test.clj")))
+(def client (-> config
+                :tarantool
+                (client/new-client)
+                (component/start)))
 
-(defn tester-tuple-space*
-  [config]
-  (tuple-space/tuple-space (-> config :tester-tuple-space)))
-
-(defn tester-space*
-  [config]
-  (space/space (-> config :tester-space)))
-
-(use-fixtures :each
-  (with-system [client/client])
-  with-truncated-tarantool
-  (with-system
-    [tester-tuple-space* tester-space*]
-    {}))
+(use-fixtures :each (partial with-truncated-tarantool client))
 
 (deftest tuple-space
-  (let [space (get *system* tester-tuple-space*)]
+  (let [space (->> config
+                   :tester-tuple-space
+                   (tuple-space/new-tuple-space client)
+                   (component/start))]
     (are [x y] (= x y)
       (tuple-space/insert space [1 "Steve" "Buscemi"])
       [[1 "Steve" "Buscemi"]]
@@ -55,7 +49,10 @@
       [[2 "Steve" "Ballmer"]])))
 
 (deftest space
-  (let [space (get *system* tester-space*)]
+  (let [space (->> config
+                   :tester-space
+                   (space/new-space client)
+                   (component/start))]
     (are [x y] (= x y)
       (space/insert space
                     {:id 1
@@ -64,9 +61,9 @@
       '({:id 1 :first-name "Steve" :second-name "Buscemi"})
 
       (space/insert space
-                    {:id 2
-                     :first-name "Steve"
-                     :second-name "Jobs"})
+                       {:id 2
+                        :first-name "Steve"
+                        :second-name "Jobs"})
       '({:id 2 :first-name "Steve" :second-name "Jobs"})
 
       (space/insert space

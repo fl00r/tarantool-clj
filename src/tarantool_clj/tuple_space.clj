@@ -83,3 +83,8 @@
   [client]
   (map->tuple-space-record {:id constants/INDEXES-SPACE-ID
                             :client client}))
+
+(defn new-tuple-space
+  [client id]
+  (map->tuple-space-record {:client client
+                            :id id}))

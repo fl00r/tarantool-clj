@@ -187,3 +187,7 @@
         (tuple-space/eval tuple-space expression))
   (eval [{:keys [tuple-space]} expression args]
         (tuple-space/eval tuple-space expression args)))
+
+(defn new-space [client config]
+  (map->space-record {:client client
+                      :space-config config}))

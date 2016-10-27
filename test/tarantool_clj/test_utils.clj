@@ -21,10 +21,9 @@
 
 
 (defn with-truncated-tarantool
-  [f]
-  (do
-    (client/call (get *system* client/client) "create_testing_space" [])
-    (try
-      (f)
-      (finally (do
-                 (client/call (get *system* client/client) "drop_testing_space" []))))))
+  [client f]
+  (client/call client "create_testing_space" [])
+  (try
+    (f)
+    (finally (do
+               (client/call client "drop_testing_space" [])))))

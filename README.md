@@ -6,7 +6,8 @@ A wrapper for [Java Tarantool Connector](https://github.com/tarantool/tarantool-
 
 ```clojure
   (require '[tarantool-clj.client :as client]
-           '[tarantool-clj.space :as space])
+           '[tarantool-clj.space :as space]
+           '[com.stuartsierra.component :as component]')
 
   (def connection-config
     {:host "127.0.0.1"
@@ -16,10 +17,15 @@ A wrapper for [Java Tarantool Connector](https://github.com/tarantool/tarantool-
 
   (def test-space-config
     {:name "test"
-     :fields [:id :first-name :second-name]}
+     :fields [:id :first-name :second-name]
+     :tail :_tail}
 
-  (let [client (client/new-client connection-config)
-        space (space/new-space client test-space-config)]
+  (let [client (-> connection-config 
+                   (client/new-client) 
+                   (component/start))
+        space (-> client
+                  (space/new-space test-space-config)
+                  (component/start))]
     (space/insert space
                   {:id 1
                    :first-name "Steve"
@@ -35,6 +41,13 @@ A wrapper for [Java Tarantool Connector](https://github.com/tarantool/tarantool-
                    :first-name "Tim"
                    :second-name "Roth"})
     ;; ({:id 3 :first-name "Tim" :second-name "Roth"})
+    (space/insert space 
+                  {:id 4
+                   :first-name "Bill"
+                   :second-name "Gates"
+                   :_tail ["some" "other" "values" 42]})
+    ;; ({:id 4 :first-name "Bill" :second-name "Gates" 
+    ;;                            :_tail ["some" "other" "values" 42]})
     (space/select-first space 
                         {:id 1})
     ;; {:id 1 :first-name "Steve" :second-name "Buscemi"}
@@ -71,7 +84,7 @@ A wrapper for [Java Tarantool Connector](https://github.com/tarantool/tarantool-
     (space/call space
                 "ping")
     ;; [["pong"]]
-    (client/stop client))
+    (component/stop client))
 ```
 
 PS: Some of functionality is broken because of underlying Java implementation.

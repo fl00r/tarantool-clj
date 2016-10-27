@@ -1,5 +1,6 @@
 (ns tarantool-clj.client
-  (:require [defcomponent :refer [defcomponent]])
+  (:require [defcomponent :refer [defcomponent]]
+            [com.stuartsierra.component :as component])
   (import [org.tarantool
            TarantoolConnection16Impl
            TarantoolConnection16])
@@ -24,7 +25,7 @@
 (defcomponent client []
   [config]
   (start [this]
-         (let [{:keys [host port username password]} (-> config :tarantool)
+         (let [{:keys [host port username password]} config
                conn (TarantoolConnection16Impl. host port)]
            (when (and username password)
              (.auth conn username password))
@@ -60,3 +61,7 @@
         (.call conn function-name (to-array args-tuple)))
   (eval [{:keys [conn]} expression args-tuple]
         (.eval conn expression (to-array args-tuple))))
+
+(defn new-client
+  [config]
+  (map->client-record {:config config}))
