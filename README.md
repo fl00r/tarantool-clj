@@ -16,7 +16,7 @@ A wrapper for [Java Tarantool Connector](https://github.com/tarantool/tarantool-
 
   (def test-space-config
     {:name "test"
-     :fields [:id :first-name :last-name]}
+     :fields [:id :first-name :second-name]}
 
   (let [client (client/new-client connection-config)
         space (space/new-space client test-space-config)]
@@ -49,7 +49,7 @@ A wrapper for [Java Tarantool Connector](https://github.com/tarantool/tarantool-
     ;;  {:id 2 :first-name "Steve" :second-name "Jobs"})
     (space/select space 
                   {:first-name "Steve"} 
-                  {:terator :eq :offset 1 :limit 100})
+                  {:iterator :eq :offset 1 :limit 100})
     ;; ({:id 2 :first-name "Steve" :second-name "Jobs"})
     (space/update space 
                   {:id 2} 
