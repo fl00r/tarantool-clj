@@ -2,6 +2,10 @@
 
 A wrapper for [Java Tarantool Connector](https://github.com/tarantool/tarantool-java)
 
+## Install
+
+https://clojars.org/tarantool-clj
+
 ## Usage
 
 ```clojure
