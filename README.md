@@ -7,7 +7,7 @@ A wrapper for [Java Tarantool Connector](https://github.com/tarantool/tarantool-
 ```clojure
   (require '[tarantool-clj.client :as client]
            '[tarantool-clj.space :as space]
-           '[com.stuartsierra.component :as component]')
+           '[com.stuartsierra.component :as component])
 
   (def connection-config
     {:host "127.0.0.1"
