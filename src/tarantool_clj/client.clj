@@ -25,16 +25,22 @@
 (defcomponent client []
   [config]
   (start [this]
-         (let [{:keys [host port username password]} config
-               conn (TarantoolConnection16Impl. host port)]
+         (let [{:keys [host port username password start-hook]} config
+               conn (TarantoolConnection16Impl. host port)
+               this* (assoc this :conn conn)]
            (when (and username password)
              (.auth conn username password))
-           (assoc this :conn conn)))
+           (if start-hook
+             (start-hook this*)
+             this*)))
   (stop [this]
-        (let [conn (:conn this)]
+        (let [stop-hook (:stop-hook config)
+              conn (:conn this)]
           (when conn
             (.close conn))
-          (dissoc this :conn)))
+          (if stop-hook
+            (dissoc (stop-hook this) :conn)
+            (dissoc this :conn))))
   ClientProtocol
   (select [{:keys [conn]} space-id index-id limit offset iterator key-tuple]
           (.select conn space-id index-id (to-array key-tuple) offset limit iterator))
