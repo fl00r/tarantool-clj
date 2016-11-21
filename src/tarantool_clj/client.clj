@@ -28,22 +28,14 @@
 
 (defn return-connection
   [{:keys [connections] :as pool} conn]
-  (log/debug "Returning connection: "
-             (-> @connections (first) (count) (str))
-             " of "
-             (-> @connections (second) (str)))
-  (swap! connections (fn [[ready cnt _]]
-                       [(conj ready conn) cnt])))
+  (swap! connections (fn [[ready _]]
+                       [(conj ready conn)])))
 
 (defn aquire-connection
   [{:keys [connections pool-size] :as pool}]
   (let [new-connections (swap! connections
-                               (fn [[[first & tail :as ready] cnt _]]
-                                 (if first
-                                   [tail cnt first]
-                                   (if (< cnt pool-size)
-                                     [ready (inc cnt) (create-connection pool)]
-                                     [ready cnt nil]))))]
+                               (fn [[[first & tail :as ready] _]]
+                                 [tail first]))]
     (let [conn (last new-connections)]
       (if conn
         conn
@@ -61,8 +53,8 @@
   [config]
   (start [this]
          (assoc this
-                :connections (atom [[] 0])
-                :pool-size (get config :pool-size 20)))
+                :connections (atom [(repeatedly (get config :pool-size 20)
+                                                #(create-connection this))])))
   (stop [this]
         (->> this :connections (map component/stop))
         (dissoc this :connections))
@@ -85,7 +77,7 @@
         (in-pool this #(eval % expression args-tuple))))
 
 ;;
-;; Wrapper arround Java Tarantool Connector
+;; Wrapper arround Java Tarantool Connepctor
 ;; https://github.com/tarantool/tarantool-java/
 ;;
 (defcomponent client []

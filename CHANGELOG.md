@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file. This change
 ## [Unreleased]
 ### Changed
 
+## [0.1.4] - 2016-21-11
+### Fixed
+- pool creation as a side effect in a swap operation
+
 ## [0.1.3] - 2016-21-11
 ### Added
 - Connection pool size limit
