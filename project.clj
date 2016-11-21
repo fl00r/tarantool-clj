@@ -1,8 +1,9 @@
-(defproject tarantool-clj "0.1.2"
+(defproject tarantool-clj "0.1.3"
   :description "Clojure Tarantool Connector"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.8.0"]
                  [defcomponent "0.1.6"]
+                 [org.clojure/tools.logging "0.3.1"]
                  [org.tarantool/connector "1.6.7"]])

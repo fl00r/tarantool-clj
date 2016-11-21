@@ -1,6 +1,7 @@
 (ns tarantool-clj.client
   (:require [defcomponent :refer [defcomponent]]
-            [com.stuartsierra.component :as component])
+            [com.stuartsierra.component :as component]
+            [clojure.tools.logging :as log])
   (import [org.tarantool
            TarantoolConnection16Impl
            TarantoolConnection16])
@@ -27,29 +28,41 @@
 
 (defn return-connection
   [{:keys [connections] :as pool} conn]
-  (swap! connections (fn [[ready _]]
-                       [(conj ready conn)])))
+  (log/debug "Returning connection: "
+             (-> @connections (first) (count) (str))
+             " of "
+             (-> @connections (second) (str)))
+  (swap! connections (fn [[ready cnt _]]
+                       [(conj ready conn) cnt])))
 
 (defn aquire-connection
-  [{:keys [connections] :as pool}]
+  [{:keys [connections pool-size] :as pool}]
   (let [new-connections (swap! connections
-                               (fn [[[first & tail :as ready] _]]
+                               (fn [[[first & tail :as ready] cnt _]]
                                  (if first
-                                   [tail first]
-                                   [ready (create-connection pool)])))]
-    (last new-connections)))
+                                   [tail cnt first]
+                                   (if (< cnt pool-size)
+                                     [ready (inc cnt) (create-connection pool)]
+                                     [ready cnt nil]))))]
+    (let [conn (last new-connections)]
+      (if conn
+        conn
+        (throw (Exception. "Can't aquire connection from pool"))))))
 
 (defn in-pool
   [pool f]
-  (let [conn (aquire-connection pool)
-        res (f conn)]
-    (return-connection pool conn)
-    res))
+  (let [conn (aquire-connection pool)]
+    (try
+      (f conn)
+      (finally 
+       (return-connection pool conn)))))
 
 (defcomponent pool []
   [config]
   (start [this]
-         (assoc this :connections (atom [])))
+         (assoc this
+                :connections (atom [[] 0])
+                :pool-size (get config :pool-size 20)))
   (stop [this]
         (->> this :connections (map component/stop))
         (dissoc this :connections))
