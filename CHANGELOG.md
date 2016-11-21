@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file. This change
 ## [Unreleased]
 ### Changed
 
+## [0.1.3] - 2016-21-11
+### Added
+- Connection pool size limit
+
+## [0.1.2] - 2016-21-11
+### Added
+- Connection pool crutch to "fix" Thread unsafety
+
 ## [0.1.1] - 2016-11-10
 ### Changed
 - Added support of start-hook and stop-hook
