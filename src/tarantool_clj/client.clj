@@ -5,6 +5,9 @@
            TarantoolConnection16Impl
            TarantoolConnection16])
   (:refer-clojure :exclude [eval update replace]))
+
+(defn new-client [])
+
 ;;
 ;; https://tarantool.org/doc/dev_guide/box_protocol.html
 ;;
@@ -17,6 +20,56 @@
   (upsert [this space-id data-tuple ops-tuples])
   (call [this function-name args-tuple])
   (eval [this expression args-tuple]))
+
+(defn create-connection
+  [pool]
+  (-> pool :config new-client (component/start)))
+
+(defn return-connection
+  [{:keys [connections] :as pool} conn]
+  (swap! connections (fn [[ready _]]
+                       [(conj ready conn)])))
+
+(defn aquire-connection
+  [{:keys [connections] :as pool}]
+  (let [new-connections (swap! connections
+                               (fn [[[first & tail :as ready] _]]
+                                 (if first
+                                   [tail first]
+                                   [ready (create-connection pool)])))]
+    (last new-connections)))
+
+(defn in-pool
+  [pool f]
+  (let [conn (aquire-connection pool)
+        res (f conn)]
+    (return-connection pool conn)
+    res))
+
+(defcomponent pool []
+  [config]
+  (start [this]
+         (assoc this :connections (atom [])))
+  (stop [this]
+        (->> this :connections (map component/stop))
+        (dissoc this :connections))
+  ClientProtocol
+  (select [this space-id index-id limit offset iterator key-tuple]
+          (in-pool this #(select % space-id index-id limit offset iterator key-tuple)))
+  (insert [this space-id data-tuple]
+          (in-pool this #(insert % space-id data-tuple)))
+  (replace [this space-id data-tuple]
+           (in-pool this #(replace % space-id data-tuple)))
+  (update [this space-id index-id key-tuple ops-tuples]
+          (in-pool this #(update % space-id index-id key-tuple ops-tuples)))
+  (delete [this space-id index-id key-tuple]
+          (in-pool this #(delete % space-id index-id key-tuple)))
+  (upsert [this space-id data-tuple ops-tuples]
+          (in-pool this #(upsert % space-id data-tuple ops-tuples)))
+  (call [this function-name args-tuple]
+        (in-pool this #(call % function-name args-tuple)))
+  (eval [this expression args-tuple]
+        (in-pool this #(eval % expression args-tuple))))
 
 ;;
 ;; Wrapper arround Java Tarantool Connector
@@ -71,3 +124,7 @@
 (defn new-client
   [config]
   (map->client-record {:config config}))
+
+(defn new-pool
+  [config]
+  (map->pool-record {:config config}))

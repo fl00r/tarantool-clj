@@ -10,7 +10,7 @@
 (def config (clojure.edn/read-string (slurp "config/test.clj")))
 (def client (-> config
                 :tarantool
-                (client/new-client)
+                (client/new-pool)
                 (component/start)))
 
 (use-fixtures :each (partial with-truncated-tarantool client))
