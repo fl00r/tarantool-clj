@@ -1,4 +1,4 @@
-(defproject tarantool-clj "0.1.4"
+(defproject tarantool-clj "0.1.6"
   :description "Clojure Tarantool Connector"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"

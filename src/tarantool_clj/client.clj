@@ -46,8 +46,8 @@
   (let [conn (aquire-connection pool)]
     (try
       (f conn)
-      (finally 
-       (return-connection pool conn)))))
+      (finally
+        (when conn (return-connection pool conn))))))
 
 (defcomponent pool []
   [config]
