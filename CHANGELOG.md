@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file. This change
 ## [Unreleased]
 ### Changed
 
-## [0.1.5] - 2016-22-11
+## [0.1.6] - 2016-22-11
 ### Fixed
 - Do not return nil into connection pool
 
